@@ -55,8 +55,8 @@ app.post('/api/shorturl', (req, res) => {
   const { url: originalUrl } = req.body;
 
   // Validate URL format with stricter regex
-  const validateUrl = /^(https?:\/\/)?(www\.)?([a-zA-Z0-9_-]+\.)+[a-zA-Z]{2,6}(\/.*)?$/.test(originalUrl);
-  if (!validateUrl) {
+  const urlRegex = /^(https?:\/\/)(www\.)?[a-zA-Z0-9-]{1,256}\.[a-zA-Z]{2,6}(\/.*)?$/;
+  if (!urlRegex.test(originalUrl)) {
     return res.status(400).json({ error: 'invalid url' });
   }
 
@@ -94,7 +94,7 @@ app.get('/api/shortUrl/:shortUrl', async (req, res) => {
     if (url) {
       res.redirect(url.originalUrl);
     } else {
-      res.status(404).json({ error: 'No URL Found' });
+      res.status(404).json({ error: 'No short URL found for the given input' });
     }
   } catch (e) {
     res.status(500).json({error: 'Server Error'});
