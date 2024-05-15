@@ -54,12 +54,20 @@ app.get('/api/hello', function(req, res) {
 app.post('/api/shorturl', (req, res) => {
   const { url: originalUrl } = req.body;
 
+  // Validate URL format
+  var validateUrl = originalUrl.match(/(http(s)?:\/\/.)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/g);
+  if (validateUrl == null) {
+    return res.status(400).json({ error: 'invalid url' });
+  }
+
   try {
     const parsedURL = new URL(originalUrl);
     const hostname = parsedURL.hostname;
-  
+
     dns.lookup(hostname, async (err) => {
-      if (err) return res.status(400).json({error: 'invalid hostname'});
+      if (err) { 
+        return res.status(400).json({error: 'invalid hostname'});
+      }
 
       const shortUrl = shortid.generate();
       const newUrl = new Url({ originalUrl, shortUrl });
@@ -89,7 +97,7 @@ app.get('/api/shortUrl/:shortUrl', async (req, res) => {
       res.status(404).json({ error: 'No URL Found' });
     }
   } catch (e) {
-    res.status(400).json({error: 'Server Error'});
+    res.status(500).json({error: 'Server Error'});
   }
 });
 
