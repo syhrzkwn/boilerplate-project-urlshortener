@@ -61,7 +61,7 @@ app.post('/api/shorturl', async (req, res) => {
   // Validate URL format
   const urlRegex = /^(https?:\/\/)(www\.)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(\/.*)?$/;
   if (!urlRegex.test(originalUrl)) {
-    return res.status(400).json({ error: 'invalid url' });
+    return res.status(400).json({ error: 'Invalid URL' });
   }
 
   try {
@@ -70,7 +70,7 @@ app.post('/api/shorturl', async (req, res) => {
 
     dns.lookup(hostname, async (err) => {
       if (err) { 
-        return res.status(400).json({ error: 'invalid hostname' });
+        return res.status(400).json({ error: 'Invalid Hostname' });
       }
 
       // Generate unique shortUrl
@@ -91,7 +91,7 @@ app.post('/api/shorturl', async (req, res) => {
       });
     });
   } catch (e) {
-    return res.status(400).json({ error: 'invalid url' });
+    return res.status(400).json({ error: 'Invalid URL' });
   }
 });
 
