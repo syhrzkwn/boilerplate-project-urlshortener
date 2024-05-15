@@ -58,19 +58,19 @@ app.get('/api/hello', function(req, res) {
 app.post('/api/shorturl', async (req, res) => {
   const { url: originalUrl } = req.body;
 
-  // Validate URL format
-  const urlRegex = /^(http|https)(:\/\/)/;
-  if (!urlRegex.test(originalUrl)) {
-    return res.status(400).json({ error: 'Invalid URL' });
-  }
-
   try {
     const parsedURL = new URL(originalUrl);
     const hostname = parsedURL.hostname;
 
+    // Validate URL format
+    const httpRegex = /^(http|https)(:\/\/)/; 
+    if (!httpRegex.test(originalUrl)) {
+      return res.json({ error: 'Invalid URL' })
+    }
+
     dns.lookup(hostname, async (err) => {
       if (err) { 
-        return res.status(400).json({ error: 'Invalid Hostname' });
+        return res.json({ error: 'Invalid Hostname' });
       }
 
       // Generate unique shortUrl
@@ -91,7 +91,7 @@ app.post('/api/shorturl', async (req, res) => {
       });
     });
   } catch (e) {
-    return res.status(400).json({ error: 'Invalid URL' });
+    return res.json({ error: 'Invalid URL' });
   }
 });
 
@@ -105,10 +105,10 @@ app.get('/api/shorturl/:shortUrl', async (req, res) => {
     if (url) {
       res.redirect(url.originalUrl);
     } else {
-      res.status(404).json({ error: 'No short URL found for the given input' });
+      res.json({ error: 'No short URL found for the given input' });
     }
   } catch (e) {
-    res.status(500).json({ error: 'Server Error' });
+    res.json({ error: 'Server Error' });
   }
 });
 
