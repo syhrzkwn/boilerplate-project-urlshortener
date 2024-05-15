@@ -54,9 +54,9 @@ app.get('/api/hello', function(req, res) {
 app.post('/api/shorturl', (req, res) => {
   const { url: originalUrl } = req.body;
 
-  // Validate URL format
-  var validateUrl = originalUrl.match(/^(https?:\/\/)?(www\.)?([a-zA-Z0-9_-]+\.)+[a-zA-Z]{2,6}(\/.*)?$/);
-  if (validateUrl == null) {
+  // Validate URL format with stricter regex
+  const validateUrl = /^(https?:\/\/)?(www\.)?([a-zA-Z0-9_-]+\.)+[a-zA-Z]{2,6}(\/.*)?$/.test(originalUrl);
+  if (!validateUrl) {
     return res.status(400).json({ error: 'invalid url' });
   }
 
