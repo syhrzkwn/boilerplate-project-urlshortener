@@ -6,7 +6,6 @@ const { URL } = require('url');
 const express = require('express');
 const cors = require('cors');
 const app = express();
-const shortid = require('shortid');
 
 // Basic Configuration
 const port = process.env.PORT || 3000;
@@ -23,22 +22,27 @@ mongoose.connect(process.env.MONGO_URI, {
 
 // Middleware
 app.use(cors());
-
 app.use('/public', express.static(`${process.cwd()}/public`));
-
 app.use(bodyParser.json());
-
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Model
 const Schema = mongoose.Schema;
 
-const urlScheme = new Schema({
+const urlSchema = new Schema({
   originalUrl: { type: String, required: true },
-  shortUrl: { type: String, required: true, unique: true }
+  shortUrl: { type: Number, required: true, unique: true }
 });
 
-const Url = mongoose.model('Url', urlScheme);
+const Url = mongoose.model('Url', urlSchema);
+
+// Counter schema for generating unique shortUrl
+const counterSchema = new Schema({
+  _id: { type: String, required: true },
+  sequence_value: { type: Number, default: 0 }
+});
+
+const Counter = mongoose.model('Counter', counterSchema);
 
 // WEB
 app.get('/', function(req, res) {
@@ -51,11 +55,11 @@ app.get('/api/hello', function(req, res) {
 });
 
 // API ShortURL to create short url
-app.post('/api/shorturl', (req, res) => {
+app.post('/api/shorturl', async (req, res) => {
   const { url: originalUrl } = req.body;
 
-  // Validate URL format with stricter regex
-  const urlRegex = /^(https?:\/\/)(www\.)?[a-zA-Z0-9-]{1,256}\.[a-zA-Z]{2,6}(\/.*)?$/;
+  // Validate URL format
+  const urlRegex = /^(https?:\/\/)(www\.)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(\/.*)?$/;
   if (!urlRegex.test(originalUrl)) {
     return res.status(400).json({ error: 'invalid url' });
   }
@@ -66,12 +70,19 @@ app.post('/api/shorturl', (req, res) => {
 
     dns.lookup(hostname, async (err) => {
       if (err) { 
-        return res.status(400).json({error: 'invalid hostname'});
+        return res.status(400).json({ error: 'invalid hostname' });
       }
 
-      const shortUrl = shortid.generate();
-      const newUrl = new Url({ originalUrl, shortUrl });
+      // Generate unique shortUrl
+      const counter = await Counter.findOneAndUpdate(
+        { _id: 'shortUrlCounter' },
+        { $inc: { sequence_value: 1 } },
+        { upsert: true, new: true }
+      );
+      const shortUrl = counter.sequence_value;
 
+      // Save the URL with the generated shortUrl
+      const newUrl = new Url({ originalUrl, shortUrl });
       await newUrl.save();
 
       res.json({
@@ -80,11 +91,11 @@ app.post('/api/shorturl', (req, res) => {
       });
     });
   } catch (e) {
-    return res.status(400).json({error: 'invalid url'});
+    return res.status(400).json({ error: 'invalid url' });
   }
 });
 
-// API ShortURL to create short url
+// API ShortURL to redirect to original URL
 app.get('/api/shorturl/:shortUrl', async (req, res) => {
   const { shortUrl } = req.params;
 
@@ -97,7 +108,7 @@ app.get('/api/shorturl/:shortUrl', async (req, res) => {
       res.status(404).json({ error: 'No short URL found for the given input' });
     }
   } catch (e) {
-    res.status(500).json({error: 'Server Error'});
+    res.status(500).json({ error: 'Server Error' });
   }
 });
 
