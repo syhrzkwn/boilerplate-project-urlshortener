@@ -85,7 +85,7 @@ app.post('/api/shorturl', (req, res) => {
 });
 
 // API ShortURL to create short url
-app.get('/api/shortUrl/:shortUrl', async (req, res) => {
+app.get('/api/shorturl/:shortUrl', async (req, res) => {
   const { shortUrl } = req.params;
 
   try {
